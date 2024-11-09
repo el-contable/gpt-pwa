@@ -1,4 +1,4 @@
-import { initDB, addChatSession, getAllChatSessions } from "./indexedDB.js";
+import { initDB, addChatSession, getAllChatSessions, addMessageToChat, getMessagesByChatId } from "./indexedDB.js";
 import { sendMessage } from "./api.js"; // Import sendMessage function
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -25,11 +25,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     </div>
   `;
 
-  // Initialize Database
   await initDB();
   loadChatHistory();
 
-  // Event Listeners
   document.querySelector(".new-chat-btn").addEventListener("click", async () => {
     const chatId = await addChatSession();
     createChatHistoryItem(chatId, "New Chat");
@@ -42,16 +40,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("send-btn").addEventListener("click", async () => {
     const userInput = document.getElementById("user-input").value;
     if (userInput.trim()) {
-      addMessageToChat("user", userInput); // Display user's message
-      document.getElementById("user-input").value = ""; // Clear input
+      const chatId = getCurrentChatId();
+      addMessageToChat(chatId, "user", userInput); // Save user's message
+      addMessageToChatBox("user", userInput); // Display user's message
+      document.getElementById("user-input").value = "";
 
-      // Send the message to OpenAI API
       const response = await sendMessage(userInput);
-      addMessageToChat("bot", response); // Display bot's response
+      addMessageToChat(chatId, "bot", response); // Save bot's message
+      addMessageToChatBox("bot", response); // Display bot's response
     }
   });
 
-  // Load and display chat history from IndexedDB
   async function loadChatHistory() {
     const chatHistoryContainer = document.querySelector(".chat-history-container");
     const chats = await getAllChatSessions();
@@ -61,23 +60,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Function to create a chat history item in the sidebar
   function createChatHistoryItem(id, name, timestamp = "") {
     const chatHistoryContainer = document.querySelector(".chat-history-container");
     const chatItem = document.createElement("div");
     chatItem.classList.add("chat-history-item");
     chatItem.dataset.chatId = id;
     chatItem.innerText = `${name} - ${timestamp}`;
+    chatItem.addEventListener("click", () => loadChatSession(id));
     chatHistoryContainer.appendChild(chatItem);
   }
 
-  // Function to add messages to the chat
-  function addMessageToChat(role, message) {
+  async function loadChatSession(chatId) {
+    const chatBox = document.querySelector(".chat-box");
+    chatBox.innerHTML = ""; // Clear existing messages
+    const messages = await getMessagesByChatId(chatId);
+    messages.forEach(msg => {
+      addMessageToChatBox(msg.role, msg.content);
+    });
+  }
+
+  function addMessageToChatBox(role, message) {
     const chatBox = document.querySelector(".chat-box");
     const messageElement = document.createElement("div");
     messageElement.classList.add("message", role);
     messageElement.innerText = message;
     chatBox.appendChild(messageElement);
-    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the bottom
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function getCurrentChatId() {
+    const selectedChat = document.querySelector(".chat-history-item.selected");
+    return selectedChat ? selectedChat.dataset.chatId : null;
   }
 });

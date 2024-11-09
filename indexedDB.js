@@ -1,6 +1,7 @@
 const DB_NAME = "chatGPTApp";
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Incremented version for new object store
 const CHAT_STORE_NAME = "chats";
+const MESSAGE_STORE_NAME = "messages";
 
 let db;
 
@@ -22,8 +23,14 @@ export function initDB() {
 
     request.onupgradeneeded = (event) => {
       db = event.target.result;
+      // Chat sessions store
       if (!db.objectStoreNames.contains(CHAT_STORE_NAME)) {
         db.createObjectStore(CHAT_STORE_NAME, { keyPath: "id", autoIncrement: true });
+      }
+      // Messages store
+      if (!db.objectStoreNames.contains(MESSAGE_STORE_NAME)) {
+        const messageStore = db.createObjectStore(MESSAGE_STORE_NAME, { autoIncrement: true });
+        messageStore.createIndex("chatId", "chatId", { unique: false });
       }
       console.log("Database setup complete");
     };
@@ -42,12 +49,30 @@ export function addChatSession(name = "New Chat") {
     const request = store.add(chatSession);
 
     request.onsuccess = () => {
-      resolve(request.result);
+      resolve(request.result); // Returns the ID of the new chat session
     };
 
     request.onerror = () => {
       reject("Error adding chat session");
     };
+  });
+}
+
+// Add a new message to a chat session
+export function addMessageToChat(chatId, role, content) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([MESSAGE_STORE_NAME], "readwrite");
+    const store = transaction.objectStore(MESSAGE_STORE_NAME);
+    const message = {
+      chatId: chatId,
+      role: role,
+      content: content,
+      timestamp: new Date().toLocaleString(),
+    };
+    const request = store.add(message);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject("Error adding message to chat");
   });
 }
 
@@ -64,6 +89,24 @@ export function getAllChatSessions() {
 
     request.onerror = () => {
       reject("Error retrieving chat sessions");
+    };
+  });
+}
+
+// Retrieve all messages for a specific chat session
+export function getMessagesByChatId(chatId) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([MESSAGE_STORE_NAME], "readonly");
+    const store = transaction.objectStore(MESSAGE_STORE_NAME);
+    const index = store.index("chatId");
+    const request = index.getAll(chatId);
+
+    request.onsuccess = () => {
+      resolve(request.result);
+    };
+
+    request.onerror = () => {
+      reject("Error retrieving messages for chat session");
     };
   });
 }
