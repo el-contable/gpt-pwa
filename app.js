@@ -1,4 +1,5 @@
 import { initDB, addChatSession, getAllChatSessions } from "./indexedDB.js";
+import { sendMessage } from "./api.js"; // Import sendMessage function
 
 document.addEventListener("DOMContentLoaded", async () => {
   const app = document.getElementById("app");
@@ -38,6 +39,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("upload-image").click();
   });
 
+  document.getElementById("send-btn").addEventListener("click", async () => {
+    const userInput = document.getElementById("user-input").value;
+    if (userInput.trim()) {
+      addMessageToChat("user", userInput); // Display user's message
+      document.getElementById("user-input").value = ""; // Clear input
+
+      // Send the message to OpenAI API
+      const response = await sendMessage(userInput);
+      addMessageToChat("bot", response); // Display bot's response
+    }
+  });
+
   // Load and display chat history from IndexedDB
   async function loadChatHistory() {
     const chatHistoryContainer = document.querySelector(".chat-history-container");
@@ -56,5 +69,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     chatItem.dataset.chatId = id;
     chatItem.innerText = `${name} - ${timestamp}`;
     chatHistoryContainer.appendChild(chatItem);
+  }
+
+  // Function to add messages to the chat
+  function addMessageToChat(role, message) {
+    const chatBox = document.querySelector(".chat-box");
+    const messageElement = document.createElement("div");
+    messageElement.classList.add("message", role);
+    messageElement.innerText = message;
+    chatBox.appendChild(messageElement);
+    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the bottom
   }
 });
