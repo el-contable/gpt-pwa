@@ -101,3 +101,46 @@ body {
 .input-area button:hover {
   color: #ffffff;
 }
+/* Media Query for Mobile */
+@media (max-width: 768px) {
+  /* Adjust sidebar for mobile */
+  #sidebar {
+    position: absolute;
+    z-index: 10;
+    width: 80%;
+    height: 100vh;
+    transform: translateX(-100%); /* Hide sidebar by default */
+    transition: transform 0.3s ease;
+  }
+
+  #sidebar.open {
+    transform: translateX(0); /* Slide sidebar in when open */
+  }
+
+  /* Main container adjustments */
+  #chat-container {
+    margin-left: 0; /* No margin on mobile */
+    height: calc(100vh - 60px); /* Leave space for input area */
+  }
+
+  /* Make sure input area is fixed at the bottom */
+  .input-area {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    left: 0;
+  }
+
+  /* Add a toggle button for the sidebar */
+  .sidebar-toggle {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background-color: #4b4ecf;
+    color: white;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 20;
+  }
+}

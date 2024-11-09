@@ -1,11 +1,12 @@
 import { initDB, addChatSession, getAllChatSessions, addMessageToChat, getMessagesByChatId } from "./indexedDB.js";
-import { sendMessage } from "./api.js"; // Import sendMessage function
+import { sendMessage } from "./api.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const app = document.getElementById("app");
 
-  // Sidebar and main chat area structure
+  // Sidebar and main chat area structure with sidebar toggle button
   app.innerHTML = `
+    <div class="sidebar-toggle">☰</div>
     <div id="sidebar" class="open">
       <div class="new-chat-btn">+ New Chat</div>
       <div class="chat-history-container">
@@ -28,6 +29,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initDB();
   loadChatHistory();
 
+  // Sidebar Toggle Logic for Mobile
+  const sidebarToggle = document.querySelector(".sidebar-toggle");
+  const sidebar = document.getElementById("sidebar");
+
+  sidebarToggle.addEventListener("click", () => {
+    sidebar.classList.toggle("open");
+  });
+
   document.querySelector(".new-chat-btn").addEventListener("click", async () => {
     const chatId = await addChatSession();
     createChatHistoryItem(chatId, "New Chat");
@@ -41,13 +50,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const userInput = document.getElementById("user-input").value;
     if (userInput.trim()) {
       const chatId = getCurrentChatId();
-      await addMessageToChat(chatId, "user", userInput); // Save user's message
-      addMessageToChatBox("user", userInput); // Display user's message
-      document.getElementById("user-input").value = ""; // Clear input
+      await addMessageToChat(chatId, "user", userInput);
+      addMessageToChatBox("user", userInput);
+      document.getElementById("user-input").value = "";
 
       const response = await sendMessage(userInput);
-      await addMessageToChat(chatId, "bot", response); // Save bot's message
-      addMessageToChatBox("bot", response); // Display bot's response
+      await addMessageToChat(chatId, "bot", response);
+      addMessageToChatBox("bot", response);
     }
   });
 
@@ -72,7 +81,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function loadChatSession(chatId) {
     const chatBox = document.querySelector(".chat-box");
-    chatBox.innerHTML = ""; // Clear existing messages
+    chatBox.innerHTML = "";
     const messages = await getMessagesByChatId(chatId);
     messages.forEach(msg => {
       addMessageToChatBox(msg.role, msg.content);
@@ -85,7 +94,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     messageElement.classList.add("message", role);
     messageElement.innerText = message;
     chatBox.appendChild(messageElement);
-    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the bottom
+    chatBox.scrollTop = chatBox.scrollHeight;
   }
 
   function getCurrentChatId() {
