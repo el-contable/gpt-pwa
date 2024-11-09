@@ -37,10 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     sidebar.classList.toggle("open");
   });
 
-  document.querySelector(".new-chat-btn").addEventListener("click", async () => {
-    const chatId = await addChatSession();
-    createChatHistoryItem(chatId, "New Chat");
-  });
+  document.querySelector(".new-chat-btn").addEventListener("click", createNewChat);
 
   document.getElementById("upload-btn").addEventListener("click", () => {
     document.getElementById("upload-image").click();
@@ -50,13 +47,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     const userInput = document.getElementById("user-input").value;
     if (userInput.trim()) {
       const chatId = getCurrentChatId();
-      await addMessageToChat(chatId, "user", userInput);
-      addMessageToChatBox("user", userInput);
-      document.getElementById("user-input").value = "";
+      await addMessageToChat(chatId, "user", userInput); // Save user's message
+      addMessageToChatBox("user", userInput); // Display user's message
+      document.getElementById("user-input").value = ""; // Clear input
 
       const response = await sendMessage(userInput);
-      await addMessageToChat(chatId, "bot", response);
-      addMessageToChatBox("bot", response);
+      await addMessageToChat(chatId, "bot", response); // Save bot's message
+      addMessageToChatBox("bot", response); // Display bot's response
+
+      // Set chat title if it's the first message
+      if (isFirstMessage(chatId)) {
+        updateChatTitle(chatId, userInput);
+      }
     }
   });
 
@@ -66,6 +68,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     chats.forEach(chat => {
       createChatHistoryItem(chat.id, chat.name, chat.timestamp);
+    });
+  }
+
+  function createNewChat() {
+    addChatSession().then(chatId => {
+      createChatHistoryItem(chatId, "New Chat"); // Adds chat to the sidebar
+      selectChat(chatId); // Automatically selects the new chat
     });
   }
 
@@ -80,8 +89,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function loadChatSession(chatId) {
+    selectChat(chatId); // Sets the chat as active
     const chatBox = document.querySelector(".chat-box");
-    chatBox.innerHTML = "";
+    chatBox.innerHTML = ""; // Clear existing messages
     const messages = await getMessagesByChatId(chatId);
     messages.forEach(msg => {
       addMessageToChatBox(msg.role, msg.content);
@@ -94,11 +104,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     messageElement.classList.add("message", role);
     messageElement.innerText = message;
     chatBox.appendChild(messageElement);
-    chatBox.scrollTop = chatBox.scrollHeight;
+    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the bottom
   }
 
   function getCurrentChatId() {
     const selectedChat = document.querySelector(".chat-history-item.selected");
     return selectedChat ? selectedChat.dataset.chatId : null;
+  }
+
+  function selectChat(chatId) {
+    document.querySelectorAll(".chat-history-item").forEach(item => {
+      item.classList.remove("selected");
+      if (item.dataset.chatId == chatId) item.classList.add("selected");
+    });
+  }
+
+  function isFirstMessage(chatId) {
+    const selectedChat = document.querySelector(`.chat-history-item[data-chat-id="${chatId}"]`);
+    return selectedChat && selectedChat.innerText === "New Chat";
+  }
+
+  function updateChatTitle(chatId, newTitle) {
+    const selectedChat = document.querySelector(`.chat-history-item[data-chat-id="${chatId}"]`);
+    if (selectedChat) {
+      selectedChat.innerText = newTitle;
+    }
   }
 });
