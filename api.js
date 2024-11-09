@@ -1,9 +1,9 @@
 export async function sendMessage(userMessage) {
   const API_URL = "https://api.openai.com/v1/chat/completions";
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY; // Access the environment variable
 
   if (!apiKey) {
-    throw new Error("API key is not set.");
+    throw new Error("OpenAI API key is not set in environment variables.");
   }
 
   const requestBody = {
@@ -23,13 +23,13 @@ export async function sendMessage(userMessage) {
     });
 
     if (!response.ok) {
-      throw new Error("Error with OpenAI API request");
+      throw new Error(`OpenAI API Error: ${response.statusText}`);
     }
 
     const responseData = await response.json();
     return responseData.choices[0].message.content;
   } catch (error) {
     console.error("API Error:", error);
-    return "An error occurred while retrieving the response. Please try again.";
+    throw error;
   }
 }
