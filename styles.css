@@ -4,6 +4,8 @@ body {
   margin: 0;
   background-color: #1f1f2e; /* Dark background */
   color: #e0e0e0;
+  height: 100vh;
+  overflow: hidden; /* Prevents body scrolling */
 }
 
 /* Sidebar Styling */
@@ -48,13 +50,16 @@ body {
   flex-direction: column;
   height: 100vh;
   margin-left: 250px; /* Sidebar width alignment */
+  overflow: hidden;
 }
 
 .chat-box {
   flex-grow: 1;
   padding: 20px;
   background-color: #2c2c3e;
-  overflow-y: auto;
+  overflow-y: auto; /* Allows scrolling within the chat box */
+  display: flex;
+  flex-direction: column;
 }
 
 .intro-message {
@@ -70,6 +75,8 @@ body {
   padding: 10px;
   border-top: 1px solid #3a3a4d;
   background-color: #20202b;
+  position: sticky;
+  bottom: 0;
 }
 
 .input-area input[type="text"] {

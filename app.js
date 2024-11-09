@@ -41,12 +41,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const userInput = document.getElementById("user-input").value;
     if (userInput.trim()) {
       const chatId = getCurrentChatId();
-      addMessageToChat(chatId, "user", userInput); // Save user's message
+      await addMessageToChat(chatId, "user", userInput); // Save user's message
       addMessageToChatBox("user", userInput); // Display user's message
-      document.getElementById("user-input").value = "";
+      document.getElementById("user-input").value = ""; // Clear input
 
       const response = await sendMessage(userInput);
-      addMessageToChat(chatId, "bot", response); // Save bot's message
+      await addMessageToChat(chatId, "bot", response); // Save bot's message
       addMessageToChatBox("bot", response); // Display bot's response
     }
   });
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     messageElement.classList.add("message", role);
     messageElement.innerText = message;
     chatBox.appendChild(messageElement);
-    chatBox.scrollTop = chatBox.scrollHeight;
+    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the bottom
   }
 
   function getCurrentChatId() {

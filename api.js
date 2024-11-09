@@ -1,5 +1,3 @@
-// api.js
-
 export async function sendMessage(userMessage) {
   const API_URL = "https://api.openai.com/v1/chat/completions";
   const apiKey = process.env.OPENAI_API_KEY; // Accessing environment variable
