@@ -16,6 +16,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function sendUserMessage() {
     const message = userInput.value.trim();
+    console.log("Message:", message); // Log the user input
+
     if (message) {
       addMessage("user", message);
       userInput.value = "";
@@ -24,14 +26,16 @@ document.addEventListener("DOMContentLoaded", () => {
       const typingIndicator = addTypingIndicator();
 
       try {
-        // Send message to OpenAI API and get response
-        const response = await sendMessage(message);
-        removeTypingIndicator(typingIndicator); // Remove typing indicator
-        addMessage("bot", response); // Display bot's response
+        console.log("Sending message to OpenAI API"); // Log API call
+        const response = await sendMessage(message); // Send to OpenAI
+        console.log("API Response:", response); // Log response
+
+        removeTypingIndicator(typingIndicator);
+        addMessage("bot", response);
       } catch (error) {
-        removeTypingIndicator(typingIndicator); // Remove typing indicator on error
-        addMessage("bot", "Error: Unable to retrieve response. Please try again."); // Display error message
-        console.error("API Error:", error); // Log error for debugging
+        console.error("API Error:", error);
+        removeTypingIndicator(typingIndicator);
+        addMessage("bot", "Error: Unable to retrieve response. Please try again.");
       }
     }
   }
@@ -42,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     messageElement.classList.add("message", role);
     messageElement.innerText = content;
     chatContainer.appendChild(messageElement);
-    chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to bottom
+    chatContainer.scrollTop = chatContainer.scrollHeight;
   }
 
   // Function to show typing indicator

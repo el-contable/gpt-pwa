@@ -1,6 +1,6 @@
 export async function sendMessage(userMessage) {
   const API_URL = "https://api.openai.com/v1/chat/completions";
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY; // Access the environment variable
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY; // Access environment variable
 
   if (!apiKey) {
     throw new Error("OpenAI API key is not set in environment variables.");
