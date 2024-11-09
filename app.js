@@ -128,6 +128,58 @@ document.addEventListener("DOMContentLoaded", async () => {
     const selectedChat = document.querySelector(`.chat-history-item[data-chat-id="${chatId}"]`);
     if (selectedChat) {
       selectedChat.innerText = newTitle;
+
+      // Update the title in IndexedDB
+      addChatSession(newTitle).then(updatedTitle => {
+        selectedChat.innerText = updatedTitle;
+      });
     }
   }
+
+  // Show typing indicator
+  function showTypingIndicator() {
+    const chatBox = document.querySelector(".chat-box");
+    const typingIndicator = document.createElement("div");
+    typingIndicator.classList.add("message", "bot", "typing-indicator");
+    typingIndicator.innerText = "Typing...";
+    chatBox.appendChild(typingIndicator);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  // Remove typing indicator
+  function removeTypingIndicator() {
+    const typingIndicator = document.querySelector(".typing-indicator");
+    if (typingIndicator) {
+      typingIndicator.remove();
+    }
+  }
+
+  document.getElementById("send-btn").addEventListener("click", async () => {
+    const userInput = document.getElementById("user-input").value;
+    if (userInput.trim()) {
+      const chatId = getCurrentChatId();
+      await addMessageToChat(chatId, "user", userInput);
+      addMessageToChatBox("user", userInput);
+      document.getElementById("user-input").value = "";
+
+      // Show typing indicator
+      showTypingIndicator();
+
+      try {
+        const response = await sendMessage(userInput);
+        await addMessageToChat(chatId, "bot", response);
+        removeTypingIndicator(); // Remove typing indicator once response is received
+        addMessageToChatBox("bot", response);
+      } catch (error) {
+        console.error("Error:", error);
+        removeTypingIndicator(); // Remove typing indicator on error
+        addMessageToChatBox("bot", "Error: Unable to retrieve response. Please try again.");
+      }
+
+      if (isFirstMessage(chatId)) {
+        updateChatTitle(chatId, userInput);
+      }
+    }
+  });
+
 });
