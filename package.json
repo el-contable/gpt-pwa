@@ -1,0 +1,11 @@
+{
+  "name": "chatgpt-pwa",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "vite": "^4.0.0"
+  }
+}
