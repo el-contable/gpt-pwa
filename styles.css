@@ -161,4 +161,23 @@ body {
     cursor: pointer;
     z-index: 20;
   }
+  /* Fade-in animation for messages */
+  .message {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeIn 0.3s forwards;
+  }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Slide-in animation for sidebar */
+  #sidebar {
+    transition: transform 0.3s ease;
+  }
+
 }

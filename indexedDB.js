@@ -110,3 +110,47 @@ export function getMessagesByChatId(chatId) {
     };
   });
 }
+
+// Delete a single chat session and its messages
+export function deleteChatSession(chatId) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(["chats", "messages"], "readwrite");
+    const chatStore = transaction.objectStore("chats");
+    const messageStore = transaction.objectStore("messages");
+
+    // Delete the chat session
+    const deleteChatRequest = chatStore.delete(chatId);
+    deleteChatRequest.onerror = () => reject("Failed to delete chat session");
+
+    // Delete associated messages
+    const index = messageStore.index("chatId");
+    const deleteMessagesRequest = index.openCursor(chatId);
+    deleteMessagesRequest.onsuccess = (event) => {
+      const cursor = event.target.result;
+      if (cursor) {
+        cursor.delete();
+        cursor.continue();
+      } else {
+        resolve();
+      }
+    };
+    deleteMessagesRequest.onerror = () => reject("Failed to delete messages");
+  });
+}
+
+// Clear all chat sessions and messages
+export function clearChatSessions() {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(["chats", "messages"], "readwrite");
+
+    const chatStore = transaction.objectStore("chats");
+    const clearChatRequest = chatStore.clear();
+
+    const messageStore = transaction.objectStore("messages");
+    const clearMessageRequest = messageStore.clear();
+
+    Promise.all([clearChatRequest, clearMessageRequest])
+      .then(resolve)
+      .catch(reject);
+  });
+}

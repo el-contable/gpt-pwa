@@ -1,4 +1,12 @@
-import { initDB, addChatSession, getAllChatSessions, addMessageToChat, getMessagesByChatId } from "./indexedDB.js";
+import {
+  initDB,
+  addChatSession,
+  getAllChatSessions,
+  addMessageToChat,
+  getMessagesByChatId,
+  deleteChatSession,
+  clearChatSessions,
+} from "./indexedDB.js";
 import { sendMessage } from "./api.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -9,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     <div class="sidebar-toggle">☰</div>
     <div id="sidebar" class="open">
       <div class="new-chat-btn">+ New Chat</div>
+      <div class="clear-all-btn">🗑️ Clear All Chats</div>
       <div class="chat-history-container">
         <!-- Chat history items will go here -->
       </div>
@@ -38,6 +47,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.querySelector(".new-chat-btn").addEventListener("click", createNewChat);
+  document.querySelector(".clear-all-btn").addEventListener("click", clearAllChats);
 
   document.getElementById("upload-btn").addEventListener("click", () => {
     document.getElementById("upload-image").click();
@@ -51,11 +61,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       addMessageToChatBox("user", userInput); // Display user's message
       document.getElementById("user-input").value = ""; // Clear input
 
-      const response = await sendMessage(userInput);
-      await addMessageToChat(chatId, "bot", response); // Save bot's message
-      addMessageToChatBox("bot", response); // Display bot's response
+      // Show typing indicator
+      showTypingIndicator();
 
-      // Set chat title if it's the first message
+      try {
+        const response = await sendMessage(userInput);
+        await addMessageToChat(chatId, "bot", response); // Save bot's message
+        removeTypingIndicator(); // Remove typing indicator once response is received
+        addMessageToChatBox("bot", response); // Display bot's response
+      } catch (error) {
+        console.error("Error:", error);
+        removeTypingIndicator(); // Remove typing indicator on error
+        addMessageToChatBox("bot", "Error: Unable to retrieve response. Please try again.");
+      }
+
       if (isFirstMessage(chatId)) {
         updateChatTitle(chatId, userInput);
       }
@@ -64,6 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function loadChatHistory() {
     const chatHistoryContainer = document.querySelector(".chat-history-container");
+    chatHistoryContainer.innerHTML = ""; // Clear existing content
     const chats = await getAllChatSessions();
 
     chats.forEach(chat => {
@@ -83,7 +103,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     const chatItem = document.createElement("div");
     chatItem.classList.add("chat-history-item");
     chatItem.dataset.chatId = id;
-    chatItem.innerText = `${name} - ${timestamp}`;
+
+    const chatTitle = document.createElement("span");
+    chatTitle.innerText = `${name} - ${timestamp}`;
+    chatItem.appendChild(chatTitle);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.innerText = "🗑️";
+    deleteButton.classList.add("delete-chat");
+    deleteButton.addEventListener("click", (e) => {
+      e.stopPropagation(); // Prevent selecting the chat
+      deleteChat(id);
+    });
+    chatItem.appendChild(deleteButton);
+
     chatItem.addEventListener("click", () => loadChatSession(id));
     chatHistoryContainer.appendChild(chatItem);
   }
@@ -96,6 +129,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     messages.forEach(msg => {
       addMessageToChatBox(msg.role, msg.content);
     });
+  }
+
+  async function deleteChat(chatId) {
+    await deleteChatSession(chatId); // Delete chat from IndexedDB
+    document.querySelector(`.chat-history-item[data-chat-id="${chatId}"]`).remove(); // Remove from UI
+    if (getCurrentChatId() === chatId) {
+      document.querySelector(".chat-box").innerHTML = "<div class='intro-message'>Chat has been deleted.</div>";
+    }
+  }
+
+  async function clearAllChats() {
+    await clearChatSessions(); // Clear all chats in IndexedDB
+    document.querySelector(".chat-history-container").innerHTML = ""; // Clear UI
+    document.querySelector(".chat-box").innerHTML = "<div class='intro-message'>All chats have been cleared.</div>";
   }
 
   function addMessageToChatBox(role, message) {
@@ -153,33 +200,4 @@ document.addEventListener("DOMContentLoaded", async () => {
       typingIndicator.remove();
     }
   }
-
-  document.getElementById("send-btn").addEventListener("click", async () => {
-    const userInput = document.getElementById("user-input").value;
-    if (userInput.trim()) {
-      const chatId = getCurrentChatId();
-      await addMessageToChat(chatId, "user", userInput);
-      addMessageToChatBox("user", userInput);
-      document.getElementById("user-input").value = "";
-
-      // Show typing indicator
-      showTypingIndicator();
-
-      try {
-        const response = await sendMessage(userInput);
-        await addMessageToChat(chatId, "bot", response);
-        removeTypingIndicator(); // Remove typing indicator once response is received
-        addMessageToChatBox("bot", response);
-      } catch (error) {
-        console.error("Error:", error);
-        removeTypingIndicator(); // Remove typing indicator on error
-        addMessageToChatBox("bot", "Error: Unable to retrieve response. Please try again.");
-      }
-
-      if (isFirstMessage(chatId)) {
-        updateChatTitle(chatId, userInput);
-      }
-    }
-  });
-
 });
