@@ -1,55 +1,69 @@
-// indexedDB.js
-const DB_NAME = 'ChatGPTApp';
+const DB_NAME = "chatGPTApp";
 const DB_VERSION = 1;
-const STORE_NAME = 'chatSessions';
+const CHAT_STORE_NAME = "chats";
 
-// Open or create IndexedDB
-function openDB() {
+let db;
+
+// Initialize IndexedDB
+export function initDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-      }
+    request.onerror = (event) => {
+      console.error("Database error:", event.target.errorCode);
+      reject("Database failed to open");
     };
 
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      console.log("Database opened successfully");
+      resolve(db);
+    };
+
+    request.onupgradeneeded = (event) => {
+      db = event.target.result;
+      if (!db.objectStoreNames.contains(CHAT_STORE_NAME)) {
+        db.createObjectStore(CHAT_STORE_NAME, { keyPath: "id", autoIncrement: true });
+      }
+      console.log("Database setup complete");
+    };
   });
 }
 
-// Add a new chat session to IndexedDB
-async function addChatSession(sessionName = 'New Chat') {
-  const db = await openDB();
-  const tx = db.transaction(STORE_NAME, 'readwrite');
-  const store = tx.objectStore(STORE_NAME);
-  const newSession = {
-    name: sessionName,
-    lastAccessed: new Date().toISOString()
-  };
-  store.add(newSession);
-  return tx.complete;
+// Add a new chat session
+export function addChatSession(name = "New Chat") {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([CHAT_STORE_NAME], "readwrite");
+    const store = transaction.objectStore(CHAT_STORE_NAME);
+    const chatSession = {
+      name: name,
+      timestamp: new Date().toLocaleString(),
+    };
+    const request = store.add(chatSession);
+
+    request.onsuccess = () => {
+      resolve(request.result);
+    };
+
+    request.onerror = () => {
+      reject("Error adding chat session");
+    };
+  });
 }
 
-// Get all chat sessions from IndexedDB
-async function getAllChatSessions() {
-  const db = await openDB();
-  const tx = db.transaction(STORE_NAME, 'readonly');
-  const store = tx.objectStore(STORE_NAME);
-  return store.getAll();
-}
+// Retrieve all chat sessions
+export function getAllChatSessions() {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([CHAT_STORE_NAME], "readonly");
+    const store = transaction.objectStore(CHAT_STORE_NAME);
+    const request = store.getAll();
 
-// Update a chat session name based on context
-async function updateChatSessionName(id, newName) {
-  const db = await openDB();
-  const tx = db.transaction(STORE_NAME, 'readwrite');
-  const store = tx.objectStore(STORE_NAME);
-  const session = await store.get(id);
-  session.name = newName;
-  store.put(session);
-  return tx.complete;
-}
+    request.onsuccess = () => {
+      resolve(request.result);
+    };
 
-export { addChatSession, getAllChatSessions, updateChatSessionName };
+    request.onerror = () => {
+      reject("Error retrieving chat sessions");
+    };
+  });
+}
