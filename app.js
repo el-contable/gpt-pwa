@@ -5,8 +5,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const userInput = document.getElementById("user-input");
   const sendBtn = document.getElementById("send-btn");
 
-  // Handle send button click
-  sendBtn.addEventListener("click", async () => {
+  // Handle send button click and Enter key submission
+  sendBtn.addEventListener("click", sendUserMessage);
+  userInput.addEventListener("keypress", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      sendUserMessage();
+    }
+  });
+
+  async function sendUserMessage() {
     const message = userInput.value.trim();
     if (message) {
       addMessage("user", message);
@@ -26,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("API Error:", error); // Log error for debugging
       }
     }
-  });
+  }
 
   // Function to add a message to the chat container
   function addMessage(role, content) {

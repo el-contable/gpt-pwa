@@ -7,9 +7,6 @@ body, html {
   color: #e0e0e0;
   font-family: Arial, sans-serif;
   height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 /* App Container */
@@ -25,10 +22,6 @@ body, html {
 /* Chat Container */
 .chat-container {
   flex-grow: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
   background-color: #2c2c3e;
   padding: 20px;
   box-sizing: border-box;
@@ -39,6 +32,8 @@ body, html {
 .welcome-message {
   font-size: 1.5em;
   color: #a5a5b5;
+  text-align: center;
+  margin: 0 auto;
 }
 
 /* Input Container */
@@ -75,8 +70,4 @@ body, html {
 
 .input-container button:hover {
   color: #ffffff;
-}
-
-#upload-btn {
-  font-size: 20px; /* Slightly larger for the icon */
 }
